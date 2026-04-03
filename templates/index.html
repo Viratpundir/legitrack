@@ -218,16 +218,7 @@ html += `
         <b>Bill ID:</b> ${b.bill_id || 'N/A'}
     </div>
 </div>`;
-function getLikelihood(status) {
-    const map = {
-        1: 20,
-        2: 40,
-        3: 65,
-        4: 85,
-        5: 100
-    };
-    return map[status] || 0;
-}
+
 // SEARCH
 function searchBills() {
     const query = document.getElementById("searchInput").value.toLowerCase();
