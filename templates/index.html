@@ -174,6 +174,7 @@ button {
 <script>
 let bills = [];
 let filteredBills = [];
+let expandedIndex = null;
 
 // LOAD DATA
 window.onload = async () => {
@@ -183,60 +184,80 @@ window.onload = async () => {
     renderBills();
 };
 
-// RENDER
-html += `
-<div class="bill-card ${expandedIndex === index ? 'expanded' : ''}" 
-     onclick="toggleCard(${index})">
+// RENDER FUNCTION (🔥 THIS WAS MISSING)
+function renderBills() {
+    const container = document.getElementById('mainContent');
 
-    <div class="bill-number">${b.bill_number || 'N/A'} (${b.state || ''})</div>
-    <div class="bill-title">${b.title || 'No Title'}</div>
+    if (!filteredBills.length) {
+        container.innerHTML = "<p style='padding:20px'>No bills found</p>";
+        return;
+    }
 
-    <div class="bill-meta">
-        <span class="status-badge status-${b.status}">
-            ${getStatus(b.status)}
-        </span><br>
-        Date: ${b.last_action_date || 'N/A'}
-    </div>
+    let html = "<div class='bills-grid'>";
 
-    <div class="likelihood">
-        <small>Likelihood to Pass: ${getLikelihood(b.status)}%</small>
-        <div class="progress-bar">
-            <div class="progress-fill" style="width:${getLikelihood(b.status)}%"></div>
-        </div>
-    </div>
+    filteredBills.forEach((b, index) => {
+        const status = Number(b.status); // ✅ IMPORTANT FIX
 
-    <div class="bill-details">
-        <hr>
-        <b>Description:</b><br>
-        ${b.description || 'No description available'}<br><br>
+        html += `
+        <div class="bill-card ${expandedIndex === index ? 'expanded' : ''}" 
+             onclick="toggleCard(${index})">
 
-        <b>Sponsor:</b> ${b.sponsor || 'Unknown'}<br><br>
+            <div class="bill-number">${b.bill_number || 'N/A'} (${b.state || ''})</div>
+            <div class="bill-title">${b.title || 'No Title'}</div>
 
-        <b>Last Action:</b><br>
-        ${b.last_action || 'No data'}<br><br>
+            <div class="bill-meta">
+                <span class="status-badge status-${status}">
+                    ${getStatus(status)}
+                </span><br>
+                Date: ${b.last_action_date || 'N/A'}
+            </div>
 
-        <b>Bill ID:</b> ${b.bill_id || 'N/A'}
-    </div>
-</div>`;
-function getLikelihood(status) {
-    const map = {
-        1: 20,
-        2: 40,
-        3: 65,
-        4: 85,
-        5: 100
-    };
-    return map[status] || 0;
+            <div class="likelihood">
+                <small><b>Likelihood to Pass: ${getLikelihood(status)}%</b></small>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width:${getLikelihood(status)}%"></div>
+                </div>
+            </div>
+
+            <div class="bill-details">
+                <hr>
+                <b>Description:</b><br>
+                ${b.description || 'No description available'}<br><br>
+
+                <b>Sponsor:</b> ${b.sponsor || 'Unknown'}<br><br>
+
+                <b>Last Action:</b><br>
+                ${b.last_action || 'No data'}<br><br>
+
+                <b>Bill ID:</b> ${b.bill_id || 'N/A'}
+            </div>
+        </div>`;
+    });
+
+    html += "</div>";
+    container.innerHTML = html;
 }
+
+// TOGGLE CARD
+function toggleCard(index) {
+    if (expandedIndex === index) {
+        expandedIndex = null;
+    } else {
+        expandedIndex = index;
+    }
+    renderBills();
+}
+
 // SEARCH
 function searchBills() {
     const query = document.getElementById("searchInput").value.toLowerCase();
 
     filteredBills = bills.filter(b =>
-        b.title.toLowerCase().includes(query) ||
-        b.bill_number.toLowerCase().includes(query)
+        (b.title || "").toLowerCase().includes(query) ||
+        (b.bill_number || "").toLowerCase().includes(query)
     );
 
+    expandedIndex = null;
     renderBills();
 }
 
@@ -247,9 +268,10 @@ function filterBills() {
 
     filteredBills = bills.filter(b => {
         return (!state || b.state === state) &&
-               (!status || b.status == status);
+               (!status || Number(b.status) == Number(status));
     });
 
+    expandedIndex = null;
     renderBills();
 }
 
@@ -264,19 +286,17 @@ function getStatus(status) {
     };
     return map[status] || "Unknown";
 }
-function toggleCard(index) {
-    const cards = document.querySelectorAll('.bill-card');
-    const selectedCard = cards[index];
 
-    // Close others (optional, for cleaner UX)
-    cards.forEach((card, i) => {
-        if (i !== index) {
-            card.classList.remove('expanded');
-        }
-    });
-
-    // Toggle clicked one
-    selectedCard.classList.toggle('expanded');
+// LIKELIHOOD FUNCTION
+function getLikelihood(status) {
+    const map = {
+        1: 20,
+        2: 40,
+        3: 65,
+        4: 85,
+        5: 100
+    };
+    return map[status] || 0;
 }
 </script>
 
