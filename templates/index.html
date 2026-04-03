@@ -3,194 +3,302 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LegisTrack Dashboard</title>
+<title>LegisTrack</title>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f6fb;
-    padding: 20px;
+.status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    color: white;
+    margin-top: 5px;
 }
 
-/* CARD BASE */
-.card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    margin-bottom: 25px;
+/* Colors */
+.status-1 { background: #9e9e9e; }
+.status-2 { background: #2196f3; }
+.status-3 { background: #ff9800; }
+.status-4 { background: #9c27b0; }
+.status-5 { background: #4caf50; }
+
+/* Likelihood bar */
+.likelihood {
+    margin-top: 8px;
+}
+
+.progress-bar {
+    height: 6px;
+    border-radius: 5px;
+    background: #ddd;
     overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #4caf50;
+}
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f5f5f5;
 }
 
 /* HEADER */
 .header {
     background: #0a0e1a;
     color: white;
-    padding: 12px 20px;
+    padding: 15px 30px;
+    font-size: 20px;
     font-weight: bold;
 }
 
-/* PRIORITY BAR */
-.priority-bar {
+/* SEARCH BAR */
+.toolbar {
+    padding: 20px;
+    background: #fff;
     display: flex;
-    justify-content: space-around;
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-    font-weight: bold;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-.high { color: #e53935; }
-.medium { color: #fbc02d; }
-.low { color: #43a047; }
-
-/* SECTION TITLE */
-.section-title {
-    padding: 12px 20px;
-    font-weight: bold;
-    border-bottom: 1px solid #eee;
+input, select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
 }
 
-/* BILL ITEM */
-.bill-item {
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-}
-
-.bill-title {
-    font-weight: bold;
-}
-
-.score {
-    margin-top: 5px;
-    font-weight: bold;
-}
-
-/* BUTTONS */
-.actions button {
-    margin-top: 8px;
-    margin-right: 8px;
-    padding: 6px 10px;
+button {
+    padding: 10px 15px;
+    background: #0a0e1a;
+    color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
 }
 
-.view { background: #2196f3; color: white; }
-.assign { background: #4caf50; color: white; }
-.task { background: #ff9800; color: white; }
-.review { background: #9c27b0; color: white; }
-
-/* DETAIL CARD */
-.detail-section {
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
+/* GRID */
+.bills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
 }
 
-/* PROGRESS BAR */
-.bar {
-    background: #ddd;
-    height: 8px;
-    border-radius: 5px;
-    margin: 5px 0;
+/* CARD */
+.bill-card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.bill-number {
+    font-size: 12px;
+    color: #1a6b6b;
+}
+
+.bill-title {
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.bill-meta {
+    font-size: 12px;
+    color: gray;
+}
+.bill-card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.bill-card:hover {
+    transform: scale(1.02);
+}
+
+.bill-details {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #333;
+    display: none;
+}
+
+.bill-card.expanded .bill-details {
+    display: block;
+}
+.bill-details {
+    max-height: 0;
     overflow: hidden;
+    transition: max-height 0.3s ease;
 }
 
-.fill {
-    height: 100%;
-    background: #4caf50;
-}
-
-/* EXPLANATION */
-.explanation {
-    font-size: 14px;
+.bill-card.expanded .bill-details {
+    max-height: 500px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ================= DASHBOARD CARD ================= -->
-<div class="card">
+<div class="header">⚖️ LegisTrack</div>
 
-    <div class="header">
-        Persona: [RCO ▼]
-    </div>
+<!-- TOOLBAR -->
+<div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Search bills..." oninput="searchBills()">
 
-    <div class="priority-bar">
-        <span class="high">🔴 High (12)</span>
-        <span class="medium">🟡 Medium (34)</span>
-        <span class="low">🟢 Low (120)</span>
-    </div>
+    <select id="stateFilter" onchange="filterBills()">
+        <option value="">All States</option>
+        <option>CA</option>
+        <option>TX</option>
+        <option>FL</option>
+        <option>NY</option>
+    </select>
 
-    <div class="section-title">
-        Top Priorities (Auto-ranked)
-    </div>
-
-    <div class="bill-item">
-        <div class="bill-title">1. Data Privacy Bill - California</div>
-        <div class="score high">Score: 92 🔴</div>
-        <div>Why: High penalty + Effective in 30 days</div>
-
-        <div class="actions">
-            <button class="view">View</button>
-            <button class="assign">Assign</button>
-        </div>
-    </div>
-
-    <div class="bill-item">
-        <div class="bill-title">2. Tax Amendment - Texas</div>
-        <div class="score high">Score: 88 🔴</div>
-        <div>Why: High impact + Passed stage</div>
-    </div>
-
+    <select id="statusFilter" onchange="filterBills()">
+        <option value="">All Status</option>
+        <option value="1">Prefiled</option>
+        <option value="2">Introduced</option>
+        <option value="3">Engrossed</option>
+        <option value="4">Enrolled</option>
+        <option value="5">Passed</option>
+    </select>
 </div>
 
+<!-- CONTENT -->
+<div id="mainContent"></div>
 
-<!-- ================= DETAIL CARD ================= -->
-<div class="card">
+<script>
+let bills = [];
+let filteredBills = [];
+let expandedIndex = null;
 
-    <div class="header">
-        Bill: CA Data Privacy Act Amendment
-    </div>
+// LOAD DATA
+window.onload = async () => {
+    const res = await fetch('/api/bills/');
+    bills = await res.json();
+    filteredBills = bills;
+    renderBills();
+};
 
-    <div class="detail-section">
-        <b>Priority Score: <span class="high">92 🔴 (RCO)</span></b>
-    </div>
+// RENDER FUNCTION (🔥 THIS WAS MISSING)
+function renderBills() {
+    const container = document.getElementById('mainContent');
 
-    <div class="detail-section">
-        <b>Score Breakdown:</b><br><br>
+    if (!filteredBills.length) {
+        container.innerHTML = "<p style='padding:20px'>No bills found</p>";
+        return;
+    }
 
-        Impact
-        <div class="bar"><div class="fill" style="width:90%"></div></div>
-        90<br><br>
+    let html = "<div class='bills-grid'>";
 
-        Penalty
-        <div class="bar"><div class="fill" style="width:85%"></div></div>
-        85<br><br>
+    filteredBills.forEach((b, index) => {
+        const status = Number(b.status); // ✅ IMPORTANT FIX
 
-        Urgency
-        <div class="bar"><div class="fill" style="width:80%"></div></div>
-        80<br><br>
+        html += `
+        <div class="bill-card ${expandedIndex === index ? 'expanded' : ''}" 
+             onclick="toggleCard(${index})">
 
-        Relevance
-        <div class="bar"><div class="fill" style="width:70%"></div></div>
-        70
-    </div>
+            <div class="bill-number">${b.bill_number || 'N/A'} (${b.state || ''})</div>
+            <div class="bill-title">${b.title || 'No Title'}</div>
 
-    <div class="detail-section explanation">
-        <b>Explanation:</b><br>
-        - Applies to active market (CA)<br>
-        - Introduces new reporting obligations<br>
-        - Effective in 30 days
-    </div>
+            <div class="bill-meta">
+                <span class="status-badge status-${status}">
+                    ${getStatus(status)}
+                </span><br>
+                Date: ${b.last_action_date || 'N/A'}
+            </div>
 
-    <div class="detail-section">
-        <b>Actions:</b><br><br>
-        <button class="assign">Assign Owner</button>
-        <button class="task">Create Task</button>
-        <button class="review">Mark Reviewed</button>
-    </div>
+            <div class="likelihood">
+                <small><b>Likelihood to Pass: ${getLikelihood(status)}%</b></small>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width:${getLikelihood(status)}%"></div>
+                </div>
+            </div>
 
-</div>
+            <div class="bill-details">
+                <hr>
+                <b>Description:</b><br>
+                ${b.description || 'No description available'}<br><br>
+
+                <b>Sponsor:</b> ${b.sponsor || 'Unknown'}<br><br>
+
+                <b>Last Action:</b><br>
+                ${b.last_action || 'No data'}<br><br>
+
+                <b>Bill ID:</b> ${b.bill_id || 'N/A'}
+            </div>
+        </div>`;
+    });
+
+    html += "</div>";
+    container.innerHTML = html;
+}
+
+// TOGGLE CARD
+function toggleCard(index) {
+    if (expandedIndex === index) {
+        expandedIndex = null;
+    } else {
+        expandedIndex = index;
+    }
+    renderBills();
+}
+
+// SEARCH
+function searchBills() {
+    const query = document.getElementById("searchInput").value.toLowerCase();
+
+    filteredBills = bills.filter(b =>
+        (b.title || "").toLowerCase().includes(query) ||
+        (b.bill_number || "").toLowerCase().includes(query)
+    );
+
+    expandedIndex = null;
+    renderBills();
+}
+
+// FILTER
+function filterBills() {
+    const state = document.getElementById("stateFilter").value;
+    const status = document.getElementById("statusFilter").value;
+
+    filteredBills = bills.filter(b => {
+        return (!state || b.state === state) &&
+               (!status || Number(b.status) == Number(status));
+    });
+
+    expandedIndex = null;
+    renderBills();
+}
+
+// STATUS TEXT
+function getStatus(status) {
+    const map = {
+        1: "Prefiled",
+        2: "Introduced",
+        3: "Engrossed",
+        4: "Enrolled",
+        5: "Passed"
+    };
+    return map[status] || "Unknown";
+}
+
+// LIKELIHOOD FUNCTION
+function getLikelihood(status) {
+    const map = {
+        1: 20,
+        2: 40,
+        3: 65,
+        4: 85,
+        5: 100
+    };
+    return map[status] || 0;
+}
+</script>
 
 </body>
 </html>
